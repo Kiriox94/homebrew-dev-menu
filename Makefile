@@ -37,13 +37,15 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   of a homebrew executable (.nro). This is intended to be used for sysmodules.
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
-TARGET		:=	$(notdir $(CURDIR))
+TARGET		:=	dev-menu
 BUILD		:=	build
 SOURCES		:=	source
 DATA		:=	data
 INCLUDES	:=	include
 #ROMFS	:=	romfs
 
+APP_TITLE	:= Dev Menu
+APP_AUTHOR	:= Kiriox
 APP_VERSION	:= 1.0.0
 
 #---------------------------------------------------------------------------------
