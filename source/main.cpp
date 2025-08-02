@@ -4,6 +4,7 @@
 #include <iostream>
 #include <format>
 #include <vector>
+#include <deque>
 #include <filesystem>
 
 #include <switch.h>
@@ -11,6 +12,8 @@
 
 using namespace std;
 namespace fs = std::filesystem;
+
+#define MAX_LOGS 12
 
 struct HomebrewInfo
 {
@@ -28,10 +31,13 @@ struct HomebrewInfo
 Thread thread;
 size_t selectedHomebrew = 0;
 vector<HomebrewInfo> homebrews;
-std::string logs = "\n==== Logs: ====\n";
+deque<string> logs = {};   
 
 void addLog(string log) {
-    logs += format("- {}\n", log);
+    if (logs.size() > MAX_LOGS) {
+        logs.pop_front(); // Delete the oldest log
+    }
+    logs.push_back(format("- {}", log));
 }
 
 HomebrewInfo getNroInfo(string filePath)
@@ -75,7 +81,7 @@ HomebrewInfo getNroInfo(string filePath)
 
 void updateHomebrewsList()
 {
-    addLog("Updating homebrew list...\n");
+    addLog("Updating homebrew list...");
     homebrews.clear();
     for (const auto &e : fs::directory_iterator("/switch/.dev"))
     {
@@ -92,14 +98,14 @@ void updateHomebrewsList()
 }
 
 bool launchHomebrew(string path) {
-    addLog(format("Launching {}...\n", path));
+    addLog(format("Launching {}...", path));
     if (R_SUCCEEDED(envSetNextLoad(path.c_str(), path.c_str())))
     {
         return true;
     }
     else
     {
-        addLog(format("Failed to launch {}.\n", path));
+        addLog(format("Failed to launch {}.", path));
     }
     return false;
 }
@@ -159,10 +165,10 @@ int main(int argc, char *argv[])
             auto homebrew = homebrews[selectedHomebrew];
             if (!homebrew.isEmpty())
             {
-                addLog(format("Deleting {}...\n", homebrew.path));
+                addLog(format("Deleting {}...", homebrew.path));
                 if (fs::remove(homebrew.path))
                 {
-                    addLog("Successfully deleted.\n");
+                    addLog("Successfully deleted.");
                     if (selectedHomebrew > 0) selectedHomebrew -= 1;
                     updateHomebrewsList();
                 }else
@@ -182,7 +188,7 @@ int main(int argc, char *argv[])
         nifmGetCurrentIpAddress(&ip);
 
         if (!state.errormsg.empty())
-            addLog(state.errormsg + "\n");
+            addLog(state.errormsg);
         else if (ip == 0)
         {
             printf("No internet connection!");
@@ -206,7 +212,10 @@ int main(int argc, char *argv[])
             i++;
         }
 
-        cout << logs << endl;
+        cout << "\n==== Logs: ====\n" << endl;
+        for (const auto& log : logs) {
+            cout << log << endl;
+        }
 
         if (state.launch_app && !state.activated)
         {
@@ -216,7 +225,7 @@ int main(int argc, char *argv[])
             }
             else
             {
-                addLog("Failed to launch sended app.\n");
+                addLog("Failed to launch sended app.");
             }
         }
 
