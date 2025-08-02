@@ -110,6 +110,22 @@ bool launchHomebrew(string path) {
     return false;
 }
 
+void print_progress_bar(float progress) {
+    int bar_width = 17;
+    int pos = bar_width * progress;
+
+    std::cout << "[";
+    for (int i = 0; i < bar_width; ++i) {
+        if (i < pos)
+            std::cout << "#";
+        else
+            std::cout << "-";
+    }
+    std::cout << "] " << int(progress * 100.0) << " %\r";
+    std::cout.flush();
+    std::cout << std::endl;
+}
+
 int main(int argc, char *argv[])
 {
     consoleInit(NULL);
@@ -193,14 +209,13 @@ int main(int argc, char *argv[])
         {
             printf("No internet connection!");
         }
-        else if (!state.sock_connected)
-        {
+        else if (!state.sock_connected) {
             cout << format("Waiting for nxlink to connect...\nIP: {}.{}.{}.{}, Port: {}", ip & 0xFF, (ip >> 8) & 0xFF, (ip >> 16) & 0xFF, (ip >> 24) & 0xFF, NXLINK_SERVER_PORT) << endl;
         }
-        else
-        {
-            cout << format("Transferring...\n{} out of {} KiB written", state.filetotal / 1024, state.filelen / 1024) << endl;
-            // progressPercent = (state.filetotal * 100) / state.filelen;
+        else {
+            cout << "Transferring...\n" << endl;
+            cout << format("{}/{} KiB written ", state.filetotal / 1024, state.filelen / 1024) << endl;
+            print_progress_bar(static_cast<float>(state.filetotal) / state.filelen);
         }
 
         size_t i = 0;
