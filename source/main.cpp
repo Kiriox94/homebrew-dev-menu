@@ -126,6 +126,43 @@ void print_progress_bar(float progress) {
     std::cout << std::endl;
 }
 
+bool cp(const std::string& filein, const std::string& fileout) {
+    FILE *exein, *exeout;
+    exein = fopen(filein.c_str(), "rb");
+    if (exein == NULL) {
+        /* handle error */
+        perror("file open for reading");
+        return false;
+    }
+    exeout = fopen(fileout.c_str(), "wb");
+    if (exeout == NULL) {
+        /* handle error */
+        perror("file open for writing");
+        return false;
+    }
+    size_t n, m;
+    unsigned char buff[131072];
+    do {
+        n = fread(buff, 1, sizeof buff, exein);
+        if (n) m = fwrite(buff, 1, n, exeout);
+        else   m = 0;
+    }
+    while ((n > 0) && (n == m));
+    if (m) {
+        perror("copy");
+        return false;
+    }
+    if (fclose(exeout)) {
+        perror("close output file");
+        return false;
+    }
+    if (fclose(exein)) {
+        perror("close input file");
+        return false;
+    }
+    return true;
+}
+
 int main(int argc, char *argv[])
 {
     consoleInit(NULL);
@@ -140,21 +177,18 @@ int main(int argc, char *argv[])
     threadStart(&thread);
 
     HomebrewInfo thisMetadata = getNroInfo(argv[0]);
-    string instructions = format("======= DevMenu v{} =======\nPress + to exit.\nPress - to launch homebrew menu\nPress X to refresh homebrew list.\n", thisMetadata.version);
+    string instructions = format("======= DevMenu v{} =======\nPress B to exit.\nPress - to launch homebrew menu\nPress + to refresh homebrew list.\n", thisMetadata.version);
 
     if (!fs::exists("/switch/.dev")) fs::create_directories("/switch/.dev");
     updateHomebrewsList();
-    if(homebrews.size() > 0) instructions += "Press A to launch homebrew.\nPress Y to delete homebrew\n";
-    
-
-    // nxlinkStdio();
+    if(homebrews.size() > 0) instructions += "Press A to launch homebrew.\nPress Y to delete homebrew.\nPress X to add homebrew to Homebrew Menu.\n";
 
     while (appletMainLoop())
     {
         padUpdate(&pad);
         u64 kDown = padGetButtonsDown(&pad);
 
-        if (kDown & HidNpadButton_Plus) {
+        if (kDown & HidNpadButton_B) {
             break;
         } else if (kDown & HidNpadButton_Minus && launchHomebrew("/hbmenu.nro")) {
             break;
@@ -170,12 +204,23 @@ int main(int argc, char *argv[])
             }else {
                 selectedHomebrew = 0;
             }
-        } else if (kDown & HidNpadButton_X) {
+        } else if (kDown & HidNpadButton_Plus) {
             updateHomebrewsList();
         } else if (kDown & HidNpadButton_A && !homebrews.empty()) {
             auto homebrew = homebrews[selectedHomebrew];
             if (!homebrew.isEmpty()) {
                 if (launchHomebrew(homebrew.path)) break;
+            }
+        } else if (kDown & HidNpadButton_X && !homebrews.empty()) {
+            auto homebrew = homebrews[selectedHomebrew];
+            if (!homebrew.isEmpty()) {
+                std::string filename = homebrew.path.substr(homebrew.path.find_last_of("/\\") + 1);
+                std::string dest = "/switch/" + filename;
+                if (cp(homebrew.path, dest)) {
+                    addLog(format("{} was successfuly added to Homebrew Menu", filename));
+                }else {
+                    addLog(format("Error while copying {} to {}", homebrew.path, dest));
+                }
             }
         } else if (kDown & HidNpadButton_Y && !homebrews.empty()) {
             auto homebrew = homebrews[selectedHomebrew];
