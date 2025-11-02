@@ -37,11 +37,11 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   of a homebrew executable (.nro). This is intended to be used for sysmodules.
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
-TARGET		:=	dev-menu
+TARGET		:=	devmenu
 BUILD		:=	build
-SOURCES		:=	source
+SOURCES		:=	source source/imgui_impl_hos source/imgui
 DATA		:=	data
-INCLUDES	:=	include
+INCLUDES	:=	include source/imgui_impl_hos source/imgui
 #ROMFS	:=	romfs
 
 APP_TITLE	:= Dev Menu
@@ -63,7 +63,7 @@ CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=c++20
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= -lnx -lz
+LIBS	:= -ldeko3dd -lnx -lz
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
